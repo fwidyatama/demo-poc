@@ -9,6 +9,7 @@ bp = Blueprint("users", __name__, url_prefix="/users")
 
 
 def public(user):
+    """A user as the API shows it: never the password hash."""
     return {"id": user["id"], "username": user["username"], "email": user["email"], "is_admin": bool(user["is_admin"])}
 
 

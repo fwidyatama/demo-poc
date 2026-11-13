@@ -9,6 +9,7 @@ bp = Blueprint("search", __name__)
 @bp.get("/search")
 @login_required
 def search():
+    """Products whose name contains q, or whose SKU is q (case-insensitive)."""
     q = request.args.get("q", "").strip()
     products = []
     if q:
