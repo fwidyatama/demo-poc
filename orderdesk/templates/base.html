@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}{% endblock %} · Order Desk</title>
+</head>
+<body>
+  <nav>
+    <strong>Order Desk</strong>
+    {% if g.user %}
+      <a href="{{ url_for('orders.list_orders') }}">Orders</a>
+      <a href="{{ url_for('search.search') }}">Products</a>
+      <span>{{ g.user['username'] }}</span>
+      <form action="{{ url_for('auth.logout') }}" method="post" style="display:inline"><button>Log out</button></form>
+    {% endif %}
+  </nav>
+  {% for message in get_flashed_messages() %}<p class="flash">{{ message }}</p>{% endfor %}
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order['id'] }}{% endblock %}
+{% block content %}
+<h1>Order #{{ order['id'] }} <small>{{ order['status'] }}</small></h1>
+<table>
+  <tr><th>Product</th><th>SKU</th><th>Qty</th><th>Price</th></tr>
+  {% for item in items %}
+  <tr><td>{{ item['name'] }}</td><td>{{ item['sku'] }}</td><td>{{ item['quantity'] }}</td>
+      <td>{{ item['price_cents'] | money }}</td></tr>
+  {% endfor %}
+</table>
+{% if order['invoice'] %}
+<p><a href="{{ url_for('files.invoice', name=order['invoice']) }}">Download invoice</a></p>
+{% endif %}
+{% if order['status'] == 'open' %}
+<form action="{{ url_for('orders.cancel', order_id=order['id']) }}" method="post"><button>Cancel order</button></form>
+{% endif %}
+{% endblock %}

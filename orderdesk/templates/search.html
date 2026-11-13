@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<h1>Products</h1>
+<form><input name="q" value="{{ q }}" placeholder="Name or SKU"> <button>Search</button></form>
+<ul>
+  {% for p in products %}<li>{{ p['name'] }} ({{ p['sku'] }}) {{ p['price_cents'] | money }}</li>{% endfor %}
+</ul>
+{% endblock %}

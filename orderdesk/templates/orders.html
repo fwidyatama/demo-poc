@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<h1>Your orders</h1>
+<table>
+  <tr><th>#</th><th>Status</th><th>Placed</th><th>Total</th></tr>
+  {% for order in orders %}
+  <tr>
+    <td><a href="{{ url_for('orders.show', order_id=order['id']) }}">{{ order['id'] }}</a></td>
+    <td>{{ order['status'] }}</td>
+    <td>{{ order['created'] }}</td>
+    <td>{{ order['total_cents'] | money }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4">No orders yet.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
