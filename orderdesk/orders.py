@@ -1,4 +1,7 @@
-from flask import Blueprint, abort, flash, g, redirect, render_template, url_for
+import csv
+import io
+
+from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
 from .auth import login_required
 from .db import get_db
@@ -48,3 +51,41 @@ def cancel(order_id):
         db.commit()
         flash(f"Order #{order_id} cancelled.")
     return redirect(url_for("orders.show", order_id=order_id))
+
+
+@bp.get("/export")
+@login_required
+def export():
+    """CSV of the signed-in user's orders for the accounting team, optionally filtered by status and start date."""
+    since = request.args.get("since", "1970-01-01")
+    status = request.args.get("status", "")
+    sql = ("SELECT o.id, o.status, o.created, SUM(i.quantity * p.price_cents) AS total_cents FROM orders o"
+           " LEFT JOIN order_item i ON i.order_id = o.id LEFT JOIN product p ON p.id = i.product_id"
+           f" WHERE o.user_id = {g.user['id']} AND o.created >= '{since}'")
+    if status:
+        sql += f" AND o.status = '{status}'"
+    sql += " GROUP BY o.id ORDER BY o.created"
+    return csv_response(get_db().execute(sql).fetchall(), "orders.csv")
+
+
+@bp.get("/<int:order_id>/export")
+@login_required
+def export_order(order_id):
+    """CSV of one order's line items."""
+    order = get_db().execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    if order is None:
+        abort(404)
+    items = get_db().execute(
+        "SELECT p.sku, p.name, i.quantity, p.price_cents FROM order_item i JOIN product p ON p.id = i.product_id"
+        " WHERE i.order_id = ?", (order_id,)).fetchall()
+    return csv_response(items, f"order-{order_id}.csv")
+
+
+def csv_response(rows, filename):
+    out = io.StringIO()
+    writer = csv.writer(out)
+    if rows:
+        writer.writerow(rows[0].keys())
+    writer.writerows(tuple(row) for row in rows)
+    return Response(out.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
