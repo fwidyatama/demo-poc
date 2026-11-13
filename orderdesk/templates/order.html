@@ -9,6 +9,7 @@
       <td>{{ item['price_cents'] | money }}</td></tr>
   {% endfor %}
 </table>
+<p><a href="{{ url_for('orders.export_order', order_id=order['id']) }}">Export items (CSV)</a></p>
 {% if order['invoice'] %}
 <p><a href="{{ url_for('files.invoice', name=order['invoice']) }}">Download invoice</a></p>
 {% endif %}
