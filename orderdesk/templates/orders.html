@@ -2,6 +2,7 @@
 {% block title %}Orders{% endblock %}
 {% block content %}
 <h1>Your orders</h1>
+<p><a href="{{ url_for('orders.export') }}">Export CSV</a></p>
 <table>
   <tr><th>#</th><th>Status</th><th>Placed</th><th>Total</th></tr>
   {% for order in orders %}
