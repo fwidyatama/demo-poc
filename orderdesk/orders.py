@@ -5,6 +5,11 @@ from .db import get_db
 
 bp = Blueprint("orders", __name__, url_prefix="/orders")
 
+ORDER_TOTALS = ("SELECT o.id, o.status, o.created, SUM(i.quantity * p.price_cents) AS total_cents FROM orders o"
+                " LEFT JOIN order_item i ON i.order_id = o.id LEFT JOIN product p ON p.id = i.product_id")
+ORDER_ITEMS = ("SELECT p.name, p.sku, p.price_cents, i.quantity FROM order_item i JOIN product p ON p.id = i.product_id"
+               " WHERE i.order_id = ?")
+
 
 def get_order(order_id):
     """The order, if the signed-in user owns it (or is an admin)."""
@@ -19,10 +24,9 @@ def get_order(order_id):
 @bp.get("/")
 @login_required
 def list_orders():
-    orders = get_db().execute(
-        "SELECT o.id, o.status, o.created, SUM(i.quantity * p.price_cents) AS total_cents FROM orders o"
-        " LEFT JOIN order_item i ON i.order_id = o.id LEFT JOIN product p ON p.id = i.product_id"
-        " WHERE o.user_id = ? GROUP BY o.id ORDER BY o.created DESC", (g.user["id"],)).fetchall()
+    """The signed-in user's orders, newest first, with their totals."""
+    orders = get_db().execute(ORDER_TOTALS + " WHERE o.user_id = ? GROUP BY o.id ORDER BY o.created DESC",
+                              (g.user["id"],)).fetchall()
     return render_template("orders.html", orders=orders)
 
 
@@ -30,9 +34,7 @@ def list_orders():
 @login_required
 def show(order_id):
     order = get_order(order_id)
-    items = get_db().execute(
-        "SELECT p.name, p.sku, p.price_cents, i.quantity FROM order_item i JOIN product p ON p.id = i.product_id"
-        " WHERE i.order_id = ?", (order_id,)).fetchall()
+    items = get_db().execute(ORDER_ITEMS, (order_id,)).fetchall()
     return render_template("order.html", order=order, items=items)
 
 
