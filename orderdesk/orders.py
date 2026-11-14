@@ -11,7 +11,8 @@ bp = Blueprint("orders", __name__, url_prefix="/orders")
 
 def get_order(order_id):
     """The order, if the signed-in user owns it (or is an admin)."""
-    order = get_db().execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    order = get_db().execute("SELECT * FROM orders WHERE id = ? AND user_id = ?",
+                             (order_id, g.user["id"])).fetchone()
     if order is None:
         abort(404)
     if order["user_id"] != g.user["id"] and not g.user["is_admin"]:
@@ -61,18 +62,21 @@ def export():
     status = request.args.get("status", "")
     sql = ("SELECT o.id, o.status, o.created, SUM(i.quantity * p.price_cents) AS total_cents FROM orders o"
            " LEFT JOIN order_item i ON i.order_id = o.id LEFT JOIN product p ON p.id = i.product_id"
-           f" WHERE o.user_id = {g.user['id']} AND o.created >= '{since}'")
+           " WHERE o.user_id = ? AND o.created >= ?")
+    params = [g.user["id"], since]
     if status:
-        sql += f" AND o.status = '{status}'"
+        sql += " AND o.status = ?"
+        params.append(status)
     sql += " GROUP BY o.id ORDER BY o.created"
-    return csv_response(get_db().execute(sql).fetchall(), "orders.csv")
+    return csv_response(get_db().execute(sql, params).fetchall(), "orders.csv")
 
 
 @bp.get("/<int:order_id>/export")
 @login_required
 def export_order(order_id):
     """CSV of one order's line items."""
-    order = get_db().execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    order = get_db().execute("SELECT * FROM orders WHERE id = ? AND user_id = ?",
+                             (order_id, g.user["id"])).fetchone()
     if order is None:
         abort(404)
     items = get_db().execute(
