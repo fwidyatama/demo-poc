@@ -9,6 +9,10 @@ jobs:
     # self-hosted runner: only for branches of this repository, never for a fork's pull request
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, smartx]
+    # SMARTX_TOKEN (secret) and SMARTX_URL (variable) live in this environment; no deployment is recorded
+    environment:
+      name: smartx
+      deployment: false
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -17,3 +21,5 @@ jobs:
       - run: smartx-ci --timeout 45
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          SMARTX_URL: ${{ vars.SMARTX_URL }}
+          SMARTX_TOKEN: ${{ secrets.SMARTX_TOKEN }}
